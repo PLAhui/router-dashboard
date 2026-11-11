@@ -1,0 +1,22 @@
+{
+  "name": "router-dashboard",
+  "version": "1.0.0",
+  "description": "5G CPE / OpenWrt(LuCI) 路由器实时数据看板：零依赖 Node 代理 + 纯原生 Canvas/SVG 前端，含深度分析与运行报告页",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "openwrt",
+    "luci",
+    "router",
+    "dashboard",
+    "5g-cpe",
+    "monitoring"
+  ],
+  "author": "",
+  "license": "MIT"
+}

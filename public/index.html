@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>NROS 路由器数据看板</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="ambient" aria-hidden="true"><span class="orb orb-a"></span><span class="orb orb-b"></span></div>
+
+<div class="app">
+
+  <!-- ================= 顶栏 ================= -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect x="4" y="14" width="24" height="12" rx="4" stroke="currentColor" stroke-width="2"/>
+          <circle cx="11" cy="20" r="1.6" fill="currentColor"/>
+          <circle cx="16" cy="20" r="1.6" fill="currentColor"/>
+          <path d="M9 11c3.5-3 10.5-3 14 0M5 7c5.5-5 16.5-5 22 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>NROS 数据看板</h1>
+        <p>路由器运行状态 · 实时监测</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a class="nav-btn" href="/report">运行报告<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+      <a class="nav-btn" href="/analysis">深度分析<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+      <div class="device-chip">
+        <span class="chip-label">设备</span>
+        <strong id="topModel">—</strong>
+        <span class="chip-sep"></span>
+        <span id="topFirmware">—</span>
+      </div>
+      <div class="live-pill" id="livePill" data-state="loading">
+        <span class="live-dot"></span>
+        <span id="liveText">连接中</span>
+      </div>
+      <button class="icon-btn" id="themeBtn" title="切换主题" aria-label="切换主题">
+        <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= 概览条 ================= -->
+  <section class="hero">
+    <div class="hero-main">
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0M8 15.5a6 6 0 0 1 8 0"/><circle cx="12" cy="18.5" r="1.4" fill="currentColor" stroke="none"/><path d="M2 9a14 14 0 0 1 20 0"/></svg>
+      </div>
+      <div>
+        <div class="hero-title" id="heroNet">蜂窝网络 · —</div>
+        <div class="hero-sub" id="heroIsp">正在获取运营商信息…</div>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><span>运行时长</span><strong id="heroUptime">—</strong></div>
+      <div class="hero-stat"><span>累计下载</span><strong id="heroTotalDown">—</strong></div>
+      <div class="hero-stat"><span>累计上传</span><strong id="heroTotalUp">—</strong></div>
+      <div class="hero-stat"><span>实时窗口</span><strong id="heroPoints">—</strong></div>
+      <div class="hero-stat"><span>网络健康</span><strong id="heroHealth">—</strong></div>
+    </div>
+    <div class="refresh-box">
+      <div class="refresh-ring"><svg viewBox="0 0 36 36"><circle class="rr-bg" cx="18" cy="18" r="15"/><circle class="rr-fg" id="refreshArc" cx="18" cy="18" r="15"/></svg><span id="refreshSec">2</span></div>
+      <span class="refresh-label">自动刷新</span>
+    </div>
+  </section>
+
+  <!-- ================= KPI ================= -->
+  <section class="kpi-grid" id="kpiGrid">
+    <article class="card kpi" data-tone="blue">
+      <div class="kpi-top"><span class="kpi-label">实时下载</span><span class="kpi-badge">↓ DOWN</span></div>
+      <div class="kpi-value"><strong id="kDownVal">0</strong><em id="kDownUnit">bps</em></div>
+      <div class="kpi-foot"><span id="kDownNote">等待数据</span><canvas class="spark" id="spDown"></canvas></div>
+    </article>
+    <article class="card kpi" data-tone="teal">
+      <div class="kpi-top"><span class="kpi-label">实时上传</span><span class="kpi-badge">↑ UP</span></div>
+      <div class="kpi-value"><strong id="kUpVal">0</strong><em id="kUpUnit">bps</em></div>
+      <div class="kpi-foot"><span id="kUpNote">等待数据</span><canvas class="spark" id="spUp"></canvas></div>
+    </article>
+    <article class="card kpi" data-tone="violet">
+      <div class="kpi-top"><span class="kpi-label">在线终端</span><span class="kpi-badge">CLIENTS</span></div>
+      <div class="kpi-value"><strong id="kClientVal">0</strong><em>台</em></div>
+      <div class="kpi-foot"><span id="kClientNote">—</span><canvas class="spark" id="spClients"></canvas></div>
+    </article>
+    <article class="card kpi" data-tone="amber">
+      <div class="kpi-top"><span class="kpi-label">CPU 负载</span><span class="kpi-badge">CPU</span></div>
+      <div class="kpi-value"><strong id="kCpuVal">0</strong><em>%</em></div>
+      <div class="kpi-foot"><span id="kCpuNote">—</span><canvas class="spark" id="spCpu"></canvas></div>
+    </article>
+    <article class="card kpi" data-tone="rose">
+      <div class="kpi-top"><span class="kpi-label">内存占用</span><span class="kpi-badge">MEM</span></div>
+      <div class="kpi-value"><strong id="kMemVal">0</strong><em>%</em></div>
+      <div class="kpi-foot"><span id="kMemNote">—</span><canvas class="spark" id="spMem"></canvas></div>
+    </article>
+    <article class="card kpi" data-tone="green">
+      <div class="kpi-top"><span class="kpi-label">设备温度</span><span class="kpi-badge">TEMP</span></div>
+      <div class="kpi-value"><strong id="kTempVal">0</strong><em>°C</em></div>
+      <div class="kpi-foot"><span id="kTempNote">—</span><canvas class="spark" id="spTemp"></canvas></div>
+    </article>
+  </section>
+
+  <!-- ================= 主图 + 信号 ================= -->
+  <section class="grid-main">
+    <article class="card chart-card">
+      <div class="card-head">
+        <div><h2>实时流量</h2><p>基于累计字节计数器差分计算 · 单位自适应</p></div>
+        <div class="head-actions">
+          <div class="legend"><span class="lg"><i style="background:var(--c-blue)"></i>下载</span><span class="lg"><i style="background:var(--c-teal)"></i>上传</span></div>
+          <div class="range" id="rangeGroup">
+            <button data-min="1" class="active">1 分钟</button><button data-min="3">3 分钟</button><button data-min="6">6 分钟</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap tall"><canvas id="trafficChart"></canvas></div>
+      <div class="chart-foot">
+        <span>峰值下载 <b id="peakDown">—</b></span><span>峰值上传 <b id="peakUp">—</b></span>
+        <span>最近 1 分钟均值 <b id="avgDown">—</b></span>
+        <span class="foot-right">更新于 <b id="lastUpdate">—</b></span>
+      </div>
+    </article>
+
+    <article class="card signal-card">
+      <div class="card-head"><div><h2>5G 信号质量</h2><p>RSRP 参考信号接收功率</p></div><span class="tag" id="netModeTag">—</span></div>
+      <div class="gauge-area">
+        <div class="gauge">
+          <svg viewBox="0 0 200 200">
+            <circle class="gauge-bg" cx="100" cy="100" r="82"/>
+            <circle class="gauge-fg" id="gaugeArc" cx="100" cy="100" r="82"/>
+          </svg>
+          <div class="gauge-center"><strong id="rsrpVal">—</strong><span>dBm</span><em id="signalLevel">—</em></div>
+        </div>
+        <div class="signal-metrics">
+          <div class="metric"><div class="metric-top"><span>SINR</span><b id="sinrVal">—</b></div><div class="bar"><i id="sinrBar" style="width:0%;background:var(--c-violet)"></i></div></div>
+          <div class="metric"><div class="metric-top"><span>RSRQ</span><b id="rsrqVal">—</b></div><div class="bar"><i id="rsrqBar" style="width:0%;background:var(--c-teal)"></i></div></div>
+          <div class="metric"><div class="metric-top"><span>CQI</span><b id="cqiVal">—</b></div><div class="bar"><i id="cqiBar" style="width:0%;background:var(--c-amber)"></i></div></div>
+        </div>
+      </div>
+      <div class="signal-detail">
+        <div><span>频段</span><b id="bandVal">—</b></div>
+        <div><span>PCI</span><b id="pciVal">—</b></div>
+        <div><span>EARFCN</span><b id="earfcnVal">—</b></div>
+        <div><span>下行上限</span><b id="ambrDlVal">—</b></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= 趋势小图 ================= -->
+  <section class="grid-triple">
+    <article class="card chart-card">
+      <div class="card-head"><div><h2>CPU / 内存</h2><p>占用率趋势 · %</p></div><div class="legend"><span class="lg"><i style="background:var(--c-amber)"></i>CPU</span><span class="lg"><i style="background:var(--c-rose)"></i>内存</span></div></div>
+      <div class="chart-wrap"><canvas id="loadChart"></canvas></div>
+    </article>
+    <article class="card chart-card">
+      <div class="card-head"><div><h2>温度</h2><p>设备 / WiFi 芯片 · °C</p></div><div class="legend"><span class="lg"><i style="background:var(--c-green)"></i>设备</span><span class="lg"><i style="background:var(--c-blue)"></i>WiFi</span></div></div>
+      <div class="chart-wrap"><canvas id="tempChart"></canvas></div>
+    </article>
+    <article class="card chart-card">
+      <div class="card-head"><div><h2>信号强度趋势</h2><p>RSRP · dBm（越接近 0 越好）</p></div><div class="legend"><span class="lg"><i style="background:var(--c-violet)"></i>RSRP</span></div></div>
+      <div class="chart-wrap"><canvas id="signalChart"></canvas></div>
+    </article>
+  </section>
+
+  <!-- ================= 网络详情 ================= -->
+  <section class="grid-dual">
+    <article class="card">
+      <div class="card-head"><div><h2>蜂窝网络</h2><p>5G 模组实时参数</p></div><span class="tag tag-violet" id="ispTag">—</span></div>
+      <div class="kv-grid" id="cellularKv"></div>
+    </article>
+    <article class="card">
+      <div class="card-head"><div><h2>网络接口</h2><p>WAN 与 LAN 地址信息</p></div><span class="tag tag-teal" id="wanProtoTag">—</span></div>
+      <div class="iface-block">
+        <div class="iface-title"><span class="iface-dot"></span>WAN <em id="wanDevice">—</em></div>
+        <div class="kv-grid" id="wanKv"></div>
+      </div>
+      <div class="iface-block">
+        <div class="iface-title"><span class="iface-dot lan"></span>LAN <em id="lanDevice">—</em></div>
+        <div class="kv-grid" id="lanKv"></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= 用量 / WiFi / 排行 ================= -->
+  <section class="grid-triple">
+    <article class="card">
+      <div class="card-head"><div><h2>流量用量</h2><p>自路由器启动以来累计</p></div></div>
+      <div class="donut-area">
+        <div class="donut" id="trafficDonut"><div class="donut-hole"><strong id="totalTraffic">—</strong><span>总流量</span></div></div>
+        <div class="donut-legend">
+          <div><i style="background:var(--c-blue)"></i><span>下载</span><b id="dlTotal">—</b></div>
+          <div><i style="background:var(--c-teal)"></i><span>上传</span><b id="ulTotal">—</b></div>
+          <div><i style="background:var(--c-violet)"></i><span>SIM 月度</span><b id="simMonth">—</b></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><div><h2>WiFi 概览</h2><p>无线接入点状态</p></div><span class="tag tag-green" id="wifiStaTag">—</span></div>
+      <div class="wifi-hero"><div class="wifi-ssid" id="wifiSsid">—</div><div class="wifi-band" id="wifiBand">—</div></div>
+      <div class="kv-grid" id="wifiKv"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><div><h2>终端协商速率</h2><p>物理层接收速率 · Mbps</p></div></div>
+      <div class="rank-list" id="clientRank"><p class="empty">等待终端数据…</p></div>
+    </article>
+  </section>
+
+  <!-- ================= 终端列表 ================= -->
+  <section class="card clients-card">
+    <div class="card-head">
+      <div><h2>已连接终端</h2><p id="clientSummary">—</p></div>
+      <span class="tag tag-blue" id="clientCountTag">0 台</span>
+    </div>
+    <div class="table-scroll">
+      <table class="table">
+        <thead><tr><th>设备</th><th>IP 地址</th><th>MAC</th><th>信号</th><th>协商速率</th><th>连接时长</th><th>频段 / 信道</th><th>状态</th></tr></thead>
+        <tbody id="clientRows"><tr><td colspan="8" class="empty">等待数据…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= 短信收件箱 ================= -->
+  <section class="card sms-card">
+    <div class="card-head">
+      <div><h2>短信收件箱</h2><p id="smsSummary">SIM 卡短信 · 每 15 秒同步</p></div>
+      <div class="head-actions"><span class="tag tag-rose" id="smsUnreadTag">未读 0</span></div>
+    </div>
+    <div class="sms-list" id="smsList"><p class="empty">等待短信数据…</p></div>
+  </section>
+
+  <!-- ================= 页脚 ================= -->
+  <footer class="footer">
+    <div class="footer-col">
+      <h3>数据源</h3>
+      <p>本机代理服务登录后按 <b id="footInterval">2s</b> 轮询路由器 LuCI 接口，前端仅访问同源 API，密码与会话不会下发到浏览器。</p>
+    </div>
+    <div class="footer-col">
+      <h3>接口</h3>
+      <p><code id="footRuntime">/cgi-bin/luci/nradio/status/runtime/…</code></p>
+      <p><code id="footSpeed">/cgi-bin/luci/nradio/status/speed/…</code></p>
+    </div>
+    <div class="footer-col">
+      <h3>状态</h3>
+      <p id="footStatus">连接中…</p>
+      <p class="muted" id="footHost">上游路由器 · 会话由服务端持有</p>
+    </div>
+  </footer>
+</div>
+
+<div class="chart-tooltip" id="tooltip"></div>
+<script src="/app.js"></script>
+</body>
+</html>

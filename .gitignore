@@ -1,0 +1,11 @@
+# 本地私密配置（含路由器地址与密码，严禁提交）
+config.env
+
+# 运行数据（含本机网络采样记录）
+data/*
+!data/.gitkeep
+
+# 依赖与系统文件
+node_modules/
+.DS_Store
+*.log

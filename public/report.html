@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>网络运行报告 · NROS</title>
+<link rel="stylesheet" href="/report.css">
+</head>
+<body>
+<div class="page">
+
+  <!-- 工具条（打印时隐藏） -->
+  <div class="toolbar no-print">
+    <a class="tb-back" href="/">← 返回看板</a>
+    <a class="tb-back" href="/analysis">深度分析 →</a>
+    <div class="tb-right">
+      <div class="tb-range" id="rangeGroup">
+        <button data-min="60">近 1 小时</button>
+        <button data-min="360">近 6 小时</button>
+        <button data-min="1440">近 24 小时</button>
+        <button data-min="0" class="active">全部</button>
+      </div>
+      <button class="tb-print" id="printBtn">打印 / 导出 PDF</button>
+    </div>
+  </div>
+
+  <!-- 报告头 -->
+  <header class="doc-head">
+    <div class="doc-title">
+      <h1>路由器网络运行报告</h1>
+      <p id="docSub">正在生成…</p>
+    </div>
+    <div class="doc-badge">
+      <span>报告编号</span>
+      <strong id="docNo">—</strong>
+    </div>
+  </header>
+
+  <!-- 一、网络概况 -->
+  <section class="doc-sec">
+    <h2><i>01</i>网络概况与健康评分</h2>
+    <div class="ov-grid">
+      <div class="ov-health card-block">
+        <div class="health-ring" id="healthRing"></div>
+        <div class="health-items" id="healthItems"></div>
+      </div>
+      <div class="kv card-block" id="ovKv"></div>
+    </div>
+  </section>
+
+  <!-- 二、流量分析 -->
+  <section class="doc-sec">
+    <h2><i>02</i>流量分析</h2>
+    <div class="stat-strip" id="trafficStats"></div>
+    <div class="chart-block card-block">
+      <h3>分时流量（按分钟聚合）</h3>
+      <div id="barChart"></div>
+    </div>
+    <div class="chart-block card-block">
+      <h3>速率分布直方图</h3>
+      <div class="hist-row" id="histRow"></div>
+    </div>
+  </section>
+
+  <!-- 三、稳定性 -->
+  <section class="doc-sec">
+    <h2><i>03</i>运行稳定性</h2>
+    <div class="table-scroll">
+      <table class="doc-table" id="stabilityTable">
+        <thead><tr><th>指标</th><th>最小</th><th>平均</th><th>最大</th><th>P95</th><th>标准差</th><th>波动评价</th></tr></thead>
+        <tbody><tr><td colspan="7" class="empty">加载中…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 四、终端 -->
+  <section class="doc-sec">
+    <h2><i>04</i>接入终端画像</h2>
+    <div class="table-scroll">
+      <table class="doc-table" id="profileTable">
+        <thead><tr><th>设备</th><th>IP</th><th>接口</th><th>首次出现</th><th>累计在线</th><th>重连</th><th>RSSI 范围</th><th>平均协商速率</th></tr></thead>
+        <tbody><tr><td colspan="8" class="empty">加载中…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 五、事件与告警 -->
+  <section class="doc-sec">
+    <h2><i>05</i>事件与告警</h2>
+    <p class="sec-note" id="eventNote"></p>
+    <div class="event-list" id="eventList"></div>
+  </section>
+
+  <!-- 六、SIM 与短信 -->
+  <section class="doc-sec">
+    <h2><i>06</i>SIM 卡与短信</h2>
+    <div class="sim-row" id="simRow"></div>
+    <div class="table-scroll">
+      <table class="doc-table" id="smsTable">
+        <thead><tr><th>时间</th><th>发信号码</th><th>内容摘要</th></tr></thead>
+        <tbody><tr><td colspan="3" class="empty">加载中…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 七、5G 模组 -->
+  <section class="doc-sec">
+    <h2><i>07</i>5G 模组详情</h2>
+    <div class="kv card-block" id="cellKv"></div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="doc-foot">
+    <p id="footMeta">—</p>
+    <p class="muted">本报告由本地代理服务自动生成，数据来源于路由器 LuCI 接口实时采集；敏感标识（IMEI / ICCID / 手机号 / 小区号）已脱敏。报告仅在本机展示。</p>
+  </footer>
+</div>
+<script src="/report.js"></script>
+</body>
+</html>
