@@ -210,10 +210,16 @@ class Analytics {
     else if (/terminal_trackd/i.test(raw)) { type = 'device'; title = '终端状态变更'; }
     else return null;
 
-    // 脱敏：长数字串（ICCID/手机号/IMSI）、完整 MAC 仅保留后 5 位
+    // 脱敏：长数字串（ICCID/手机号/IMSI）、完整 MAC 仅保留后 5 位、DHCP 行中的终端主机名
     let detail = body.slice(0, 110)
       .replace(/\b\d{13,20}\b/g, '***')
       .replace(/([0-9A-Fa-f]{2}:){4}[0-9A-Fa-f]{2}/g, (s) => '**:**:' + s.slice(-5));
+    if (type === 'dhcp' || type === 'wifi') {
+      // dnsmasq DHCPACK(br-lan) <ip> <mac> <hostname> / hostapd 日志末尾的主机名
+      detail = detail
+        .replace(/((?:\*\*:\*\*:\S+|\d{1,3}(?:\.\d{1,3}){3})\s+)\S+\s*$/, '$1<终端>')
+        .replace(/((?:\*\*:\*\*:\S+|\d{1,3}(?:\.\d{1,3}){3})\s+)\S+$/, '$1<终端>');
+    }
     return { type, level, title, t: logTs, detail: `${time} · ${detail}` };
   }
 

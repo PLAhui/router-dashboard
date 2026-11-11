@@ -49,6 +49,21 @@
   const dash = (v) => (v === undefined || v === null || v === '' ? '—' : String(v));
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+  /* 演示模式（?demo=1）：终端名 / MAC / 短信内容替换为虚构数据，用于截图与演示 */
+  const DEMO = new URLSearchParams(location.search).has('demo');
+  const FAKE_NAMES = ['iPhone', 'MacBook Pro', 'Android 手机', 'iPad', '智能电视', 'Ubuntu 主机'];
+  const FAKE_SMS = [
+    { contact: '10086', content: '【中国移动】您本月已使用流量 12.35GB，套餐剩余 7.65GB，详情请查询掌上营业厅。' },
+    { contact: '106901234567', content: '【快递提醒】您的包裹已到达小区驿站，取件码 8821，请及时领取。' },
+    { contact: '10010', content: '尊敬的用户，您的话费余额为 86.50 元，感谢您的使用。' },
+  ];
+  const demoClients = (list) => DEMO
+    ? (list || []).map((c, i) => ({ ...c, name: FAKE_NAMES[i % FAKE_NAMES.length], mac: 'A4:83:E7:**:**:**', ssid: 'Home-5G' }))
+    : list;
+  const demoSms = (list) => DEMO
+    ? (list || []).map((m, i) => ({ ...m, contact: FAKE_SMS[i % FAKE_SMS.length].contact, content: FAKE_SMS[i % FAKE_SMS.length].content }))
+    : list;
+
   /* ---------------- Canvas 折线图 ---------------- */
   function niceCeil(v) {
     if (!(v > 0)) return 1;
@@ -423,7 +438,8 @@
     ]);
 
     /* 终端速率排行 */
-    const ranked = s.clients.map((c) => ({ ...c, rate: (c.rxrate || c.txrate) / 1000 }))
+    const clients = demoClients(s.clients);
+    const ranked = clients.map((c) => ({ ...c, rate: (c.rxrate || c.txrate) / 1000 }))
       .sort((a, b) => b.rate - a.rate).slice(0, 5);
     const maxRate = Math.max(1, ...ranked.map((c) => c.rate));
     $('clientRank').innerHTML = ranked.length ? ranked.map((c) => `
@@ -435,7 +451,7 @@
     /* 终端表 */
     $('clientCountTag').textContent = `${s.clientCount} 台`;
     $('clientSummary').textContent = `共 ${s.clientCount} 台设备接入 · ${wireless} 台无线 · 按信号强度排序`;
-    $('clientRows').innerHTML = s.clients.length ? s.clients.map((c) => {
+    $('clientRows').innerHTML = clients.length ? clients.map((c) => {
       const bars = c.rssi >= -55 ? 4 : c.rssi >= -68 ? 3 : c.rssi >= -80 ? 2 : 1;
       const cls = bars >= 3 ? 'on' : bars === 2 ? 'on mid' : 'on low';
       const signalBars = [1, 2, 3, 4].map((i) => `<i class="${i <= bars ? cls : ''}"></i>`).join('');
@@ -518,7 +534,7 @@
   };
 
   function renderSms(d) {
-    const list = d.messages || [];
+    const list = demoSms(d.messages || []);
     const meta = d.meta || {};
     const unread = meta.unread || list.filter((m) => m.stat === 0).length;
     $('smsUnreadTag').textContent = `未读 ${unread}`;

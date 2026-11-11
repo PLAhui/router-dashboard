@@ -6,6 +6,33 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
 
+  /* 演示模式（?demo=1）：终端名 / MAC / 短信内容替换为虚构数据，用于截图与演示 */
+  const DEMO = new URLSearchParams(location.search).has('demo');
+  const FAKE_NAMES = ['iPhone', 'MacBook Pro', 'Android 手机', 'iPad', '智能电视', 'Ubuntu 主机'];
+  const FAKE_SMS = [
+    { contact: '10086', content: '【中国移动】您本月已使用流量 12.35GB，套餐剩余 7.65GB，详情请查询掌上营业厅。' },
+    { contact: '106901234567', content: '【快递提醒】您的包裹已到达小区驿站，取件码 8821，请及时领取。' },
+    { contact: '10010', content: '尊敬的用户，您的话费余额为 86.50 元，感谢您的使用。' },
+  ];
+  const realNames = new Set();
+  function scrubDemo(s) {
+    let out = String(s ?? '');
+    let i = 0;
+    for (const n of realNames) out = out.split(n).join(FAKE_NAMES[i++ % FAKE_NAMES.length]);
+    out = out.replace(/([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}/g, 'A4:83:E7:**:**:**');
+    return out.replace(/\*\*:\*\*:[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2})+/g, '**:**:**:**:**');
+  }
+  function demoApply(a, snap) {
+    if (!DEMO) return;
+    ((snap && snap.clients) || []).forEach((c) => c.name && realNames.add(c.name));
+    (a.profiles || []).forEach((p) => p.name && realNames.add(p.name));
+    if (a.events) a.events = a.events.map((e) => ({ ...e, title: scrubDemo(e.title), detail: scrubDemo(e.detail) }));
+    if (a.profiles) a.profiles = a.profiles.map((p, i) => ({ ...p, name: FAKE_NAMES[i % FAKE_NAMES.length], mac: 'A4:83:E7:**:**:**' }));
+  }
+  const demoSms = (list) => DEMO
+    ? (list || []).map((m, i) => ({ ...m, contact: FAKE_SMS[i % FAKE_SMS.length].contact, content: FAKE_SMS[i % FAKE_SMS.length].content }))
+    : list;
+
   const fmtBytes = (b) => {
     b = num(b);
     if (b >= 1e9) return `${(b / 1e9).toFixed(2)} GB`;
@@ -247,7 +274,7 @@
       </div>`;
     }).join('') : '<p class="empty">未获取到 SIM 套餐数据</p>';
 
-    const msgs = (sms.messages || []).slice(0, 10);
+    const msgs = demoSms((sms.messages || []).slice(0, 10));
     const cap = sms.meta || {};
     $('smsTable').querySelector('tbody').innerHTML = msgs.map((m) => `
       <tr>
@@ -291,6 +318,7 @@
     ]);
     if (!aRes.ok || !sRes.ok) { $('docSub').textContent = '数据加载失败，请确认代理服务正在运行'; return; }
     const a = aRes, snap = sRes.snapshot || {};
+    demoApply(a, snap);
 
     const start = a.session ? a.session.startAt : null;
     const winLabel = { 60: '近 1 小时', 360: '近 6 小时', 1440: '近 24 小时', 0: '服务运行以来（全部采样）' }[Number(windowMin)] || '全部';

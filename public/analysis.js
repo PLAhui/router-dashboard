@@ -136,6 +136,26 @@
   let analysisData = null;
   let snapshotData = null;
 
+  /* 演示模式（?demo=1）：终端名 / MAC / 事件与原始 JSON 中的隐私字段替换为虚构数据 */
+  const DEMO = new URLSearchParams(location.search).has('demo');
+  const FAKE_NAMES = ['iPhone', 'MacBook Pro', 'Android 手机', 'iPad', '智能电视', 'Ubuntu 主机'];
+  const realNames = new Set();
+  function scrubDemo(s) {
+    let out = String(s ?? '');
+    let i = 0;
+    for (const n of realNames) out = out.split(n).join(FAKE_NAMES[i++ % FAKE_NAMES.length]);
+    out = out.replace(/([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}/g, 'A4:83:E7:**:**:**');
+    return out.replace(/\*\*:\*\*:[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2})+/g, '**:**:**:**:**');
+  }
+  function demoApply(a, snap) {
+    if (!DEMO) return;
+    ((snap && snap.clients) || []).forEach((c) => c.name && realNames.add(c.name));
+    (a.profiles || []).forEach((p) => p.name && realNames.add(p.name));
+    if (a.events) a.events = a.events.map((e) => ({ ...e, title: scrubDemo(e.title), detail: scrubDemo(e.detail) }));
+    if (a.profiles) a.profiles = a.profiles.map((p, i) => ({ ...p, name: FAKE_NAMES[i % FAKE_NAMES.length], mac: 'A4:83:E7:**:**:**' }));
+    if (snap && snap.clients) snap.clients = snap.clients.map((c, i) => ({ ...c, name: FAKE_NAMES[i % FAKE_NAMES.length], mac: 'A4:83:E7:**:**:**', ssid: 'Home-5G' }));
+  }
+
   function renderTop(s, a) {
     $('topModel').textContent = s ? s.device.model : '—';
     $('topFirmware').textContent = s ? s.device.firmware : '—';
@@ -376,6 +396,7 @@
       const r = await fetch('/api/raw', { cache: 'no-store' });
       const d = await r.json();
       rawText = JSON.stringify(d.raw || {}, null, 2);
+      if (DEMO && realNames.size) rawText = scrubDemo(rawText);
       renderRaw();
     } catch (e) { $('rawJson').textContent = '原始数据载入失败：' + e.message; }
   }
@@ -388,6 +409,7 @@
         fetch('/api/snapshot', { cache: 'no-store' }).then((r) => r.json()),
       ]);
       analysisData = ar; snapshotData = sr.snapshot;
+      demoApply(ar, snapshotData);
       renderTop(snapshotData, ar);
       renderStats(ar); renderHealth(ar); renderStability(ar);
       renderMinute(ar);

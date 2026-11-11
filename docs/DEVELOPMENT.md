@@ -111,6 +111,7 @@ analytics.js
   - 折线图复用 `app.js` 的 `LineChart` 类（支持 `zeroBase`、`yFormat`、悬停 tooltip）
   - 报告页的 SVG 图是临时生成的字符串，改起来很直观
 - **敏感值**：页面上永远不要直接展示未脱敏的 IMEI/ICCID/手机号，服务端已掩码，前端只需照常渲染
+- **演示模式**：URL 加 `?demo=1` 后，终端名 / MAC / 短信内容 / 事件与原始 JSON 中的隐私字段会被替换为虚构数据（三个页面均已实现），用于公开分享截图与演示，新增展示隐私数据的区块时记得接入 `scrubDemo` / `demoClients`
 
 ## 六、提交规范
 
